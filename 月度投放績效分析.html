@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月度投放績效分析 2026 / 2–5月</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE9;
+    --border: rgba(0,0,0,0.08);
+    --text-primary: #1A1917;
+    --text-secondary: #5F5E5A;
+    --text-muted: #9A9892;
+    --accent: #2A5CFF;
+    --accent-light: #E6ECFF;
+    --green: #1D7A4A;
+    --green-light: #E3F5EC;
+    --amber: #A05C00;
+    --amber-light: #FFF0D6;
+    --red: #C0392B;
+    --red-light: #FDECEB;
+    --blue-bar: #4A7DCC;
+    --green-bar: #3BAA6A;
+    --teal-bar: #2AA0A0;
+    --orange-bar: #E07830;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  header span {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 28px;
+    width: fit-content;
+  }
+  .tab {
+    padding: 7px 18px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Metric cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+  }
+  .card-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+  }
+  .card-value {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .card.accent .card-value { color: var(--accent); }
+  .card.green .card-value { color: var(--green); }
+  .card.amber .card-value { color: var(--amber); }
+
+  /* Chart wrapper */
+  .chart-block {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px 20px 16px;
+    margin-bottom: 20px;
+  }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .chart-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .chart-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 260px;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  thead th:first-child { text-align: left; }
+  tbody td {
+    padding: 11px 14px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  tbody td:first-child { text-align: left; font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag-green { background: var(--green-light); color: var(--green); }
+  .tag-amber { background: var(--amber-light); color: var(--amber); }
+  .tag-red   { background: var(--red-light); color: var(--red); }
+
+  /* Insight cards */
+  .insights { display: flex; flex-direction: column; gap: 12px; }
+  .insight {
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    border-left: 4px solid;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .insight.warn { border-left-color: #E07830; }
+  .insight.good { border-left-color: #1D7A4A; }
+  .insight.info { border-left-color: #2A5CFF; }
+  .insight-head {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+  .insight.warn .insight-head { color: var(--amber); }
+  .insight.good .insight-head { color: var(--green); }
+  .insight.info .insight-head { color: var(--accent); }
+  .insight p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+
+  .action-list {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    margin-top: 16px;
+  }
+  .action-list h3 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .action-list ol {
+    padding-left: 18px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 2;
+  }
+  .action-list li::marker { color: var(--accent); font-weight: 700; }
+
+  .note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding: 0 4px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 640px) {
+    header { padding: 14px 16px; flex-wrap: wrap; }
+    main { padding: 16px 12px 40px; }
+    .two-col { grid-template-columns: 1fr; }
+    .tabs { width: 100%; }
+    .tab { flex: 1; text-align: center; padding: 7px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>月度投放績效分析</h1>
+  <span>基法品牌</span>
+  <span id="last-updated" style="margin-left:auto;font-size:12px;color:var(--text-muted);"></span>
+  <button onclick="loadData()" style="margin-left:8px;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);font-size:12px;cursor:pointer;color:var(--text-secondary);">↻ 重新整理</button>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview', this)">總覽</button>
+    <button class="tab" onclick="switchTab('revenue', this)">業績結構</button>
+    <button class="tab" onclick="switchTab('efficiency', this)">投放效率</button>
+    <button class="tab" onclick="switchTab('insights', this)">分析建議</button>
+  </div>
+
+  <!-- 總覽 -->
+  <div id="panel-overview" class="panel active">
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">廣告總花費</div>
+        <div class="card-value" id="kpi-ad">—</div>
+        <div class="card-sub">各月合計</div>
+      </div>
+      <div class="card green">
+        <div class="card-label">新會員加入數</div>
+        <div class="card-value" id="kpi-member">—</div>
+        <div class="card-sub">各月合計</div>
+      </div>
+      <div class="card accent">
+        <div class="card-label">品牌總業績</div>
+        <div class="card-value" id="kpi-rev">—</div>
+        <div class="card-sub">各月合計</div>
+      </div>
+      <div class="card amber">
+        <div class="card-label">平均 CPA</div>
+        <div class="card-value" id="kpi-cpa">—</div>
+        <div class="card-sub">每位新會員廣告成本</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="chart-block">
+        <div class="chart-title">廣告花費 vs 品牌業績</div>
+        <div class="chart-sub">每月金額對比（元）</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#4A7DCC"></span>廣告花費</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#3BAA6A"></span>品牌業績</div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="c-overview-bar" role="img" aria-label="每月廣告花費與業績長條圖">2月廣告431業績3642；3月廣告12985業績33618；4月廣告14259業績43072；5月廣告3038業績14081。</canvas></div>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">新會員加入人數</div>
+        <div class="chart-sub">每月趨勢</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#E07830;border-radius:50%"></span>新會員數</div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="c-overview-line" role="img" aria-label="每月新會員數折線圖">2月41人；3月43人；4月16人；5月23人。</canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 業績結構 -->
+  <div id="panel-revenue" class="panel">
+    <div class="chart-block">
+      <div class="chart-title">每月業績結構：新客 vs 舊客</div>
+      <div class="chart-sub">依訂單檔新舊客比例估算</div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#4A7DCC"></span>新客業績（估）</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#B5D4F4"></span>舊客業績（估）</div>
+      </div>
+      <div class="chart-canvas-wrap" style="height:280px;"><canvas id="c-rev-stacked" role="img" aria-label="每月新舊客業績堆疊長條圖">2月新客3223舊客419；3月新客18569舊客15049；4月新客28912舊客14160；5月新客12099舊客1982。</canvas></div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">新客業績佔比 %</div>
+      <div class="chart-sub">新客對該月總業績的貢獻比例</div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#2AA0A0;border-radius:50%"></span>新客佔比</div>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="c-rev-ratio" role="img" aria-label="每月新客業績佔比折線圖">2月89%；3月55%；4月67%；5月86%。</canvas></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th>新客業績（估）</th>
+            <th>舊客業績（估）</th>
+            <th>總業績</th>
+            <th>新客佔比</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>2月</td><td>$3,223</td><td>$419</td><td>$3,642</td><td><span class="tag tag-green">89%</span></td></tr>
+          <tr><td>3月</td><td>$18,569</td><td>$15,049</td><td>$33,618</td><td><span class="tag tag-amber">55%</span></td></tr>
+          <tr><td>4月</td><td>$28,912</td><td>$14,160</td><td>$43,072</td><td><span class="tag tag-amber">67%</span></td></tr>
+          <tr><td>5月</td><td>$12,099</td><td>$1,982</td><td>$14,081</td><td><span class="tag tag-green">86%</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">※ 新客 / 舊客業績以同月訂單檔新舊客比例估算，僅代表相對結構，絕對金額可能有差異</p>
+  </div>
+
+  <!-- 投放效率 -->
+  <div id="panel-efficiency" class="panel">
+    <div class="two-col">
+      <div class="chart-block">
+        <div class="chart-title">CPA 每位新會員廣告成本</div>
+        <div class="chart-sub">越低越好</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#D4537E;border-radius:50%"></span>CPA（元/人）</div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="c-cpa" role="img" aria-label="每月CPA折線圖">2月$11；3月$302；4月$891；5月$132。</canvas></div>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">ROAS 廣告投資報酬</div>
+        <div class="chart-sub">業績 ÷ 廣告花費</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#1D9E75;border-radius:50%"></span>ROAS（倍）</div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="c-roas" role="img" aria-label="每月ROAS折線圖">2月8.5x；3月2.6x；4月3.0x；5月4.6x。</canvas></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th>廣告花費</th>
+            <th>新會員數</th>
+            <th>CPA</th>
+            <th>總業績</th>
+            <th>ROAS</th>
+            <th>效率評估</th>
+          </tr>
+        </thead>
+        <tbody id="eff-tbody">
+          <!-- 由 JS 動態產生 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 分析建議 -->
+  <div id="panel-insights" class="panel">
+    <div class="insights">
+      <div class="insight warn">
+        <div class="insight-head">⚠ 4月 CPA 異常高（$891/人）</div>
+        <p>廣告花費 $14,259 但僅帶入 16 位新會員，是全期最差的獲客效率，為 5 月 CPA 的 6.7 倍。建議拉出 4 月廣告後台細看哪組素材或受眾拖累效率，或確認是否有非廣告因素（如節日、商品缺貨）影響新會員數偏低。</p>
+      </div>
+      <div class="insight good">
+        <div class="insight-head">✓ 5月廣告效率大幅改善（CPA $132）</div>
+        <p>預算縮減至 $3,038，新會員仍帶入 23 人，ROAS 也回升至 4.6x，是 3–5 月中 ROAS 最佳的月份。5 月的投放邏輯（受眾設定、素材、出價策略）值得保留並作為後續月份的參考基準。</p>
+      </div>
+      <div class="insight warn">
+        <div class="insight-head">⚠ 2月幾乎無廣告投放（$431）</div>
+        <p>業績僅 $3,642，推測受農曆年假影響為消費淡季。此月 CPA 低（$11）僅因花費極少，不具參考性。可將 2 月預算提前挪至 3 月旺季，或規劃年節前的囤貨促購活動。</p>
+      </div>
+      <div class="insight info">
+        <div class="insight-head">📊 新客業績佔比持續偏高（55–89%）</div>
+        <p>各月新客業績貢獻均超過 55%，顯示品牌整體業績高度依賴新客。若廣告預算縮減，業績將承受較大壓力。建議加強舊客回購機制，例如：定期 LINE 推播、購買後 30/60 天回購提醒、會員獨家折扣，以提升顧客終身價值（LTV）並降低對廣告的依賴。</p>
+      </div>
+      <div class="insight good">
+        <div class="insight-head">✓ 3月廣告業績連動明顯</div>
+        <p>3 月廣告花費 $12,985，帶動業績至 $33,618（ROAS 2.6x），新客 43 人為全期最高。雖然 ROAS 不是最高，但整體業績規模是全期最佳，顯示廣告在此月有強勁的業績拉抬效果，適合每年 Q1 末做大型投放。</p>
+      </div>
+    </div>
+
+    <div class="action-list">
+      <h3>建議行動</h3>
+      <ol>
+        <li>深入分析 4 月廣告素材與受眾，找出 CPA 偏高原因，避免重蹈覆轍</li>
+        <li>複製 5 月高效投放策略：保留該月的受眾設定與出價邏輯</li>
+        <li>建立舊客回購計畫（EDM / LINE / 會員專屬促銷），降低對新客的業績依賴</li>
+        <li>2 月預算縮減，資源集中於 3 月旺季前兩週衝新客</li>
+        <li>設定 CPA 警示上限（建議 $400），超標時自動暫停廣告組或通知審查</li>
+      </ol>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── 請將下方網址換成你的 Apps Script 部署網址 ──────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+// ────────────────────────────────────────────────────────────────────────
+
+// 備用靜態資料（Apps Script 尚未設定時顯示）
+const FALLBACK = [
+  { 月份:'2月', 廣告花費:431,   新會員數:41, 新客業績:3223,  舊客業績:419,   總業績:3642  },
+  { 月份:'3月', 廣告花費:12985, 新會員數:43, 新客業績:18569, 舊客業績:15049, 總業績:33618 },
+  { 月份:'4月', 廣告花費:14259, 新會員數:16, 新客業績:28912, 舊客業績:14160, 總業績:43072 },
+  { 月份:'5月', 廣告花費:3038,  新會員數:23, 新客業績:12099, 舊客業績:1982,  總業績:14081 },
+];
+
+let months, adSpend, totalRev, newMembers, newRev, oldRev, cpaData, roasData, newPct;
+let charts = {};
+
+function parseData(rows) {
+  months     = rows.map(r => r['月份']);
+  adSpend    = rows.map(r => Number(r['廣告花費']));
+  totalRev   = rows.map(r => Number(r['總業績']));
+  newMembers = rows.map(r => Number(r['新會員數']));
+  newRev     = rows.map(r => Number(r['新客業績']));
+  oldRev     = rows.map(r => Number(r['舊客業績']));
+  cpaData    = adSpend.map((a,i) => newMembers[i] > 0 ? Math.round(a / newMembers[i]) : 0);
+  roasData   = adSpend.map((a,i) => parseFloat((totalRev[i] / (a||1)).toFixed(1)));
+  newPct     = newRev.map((n,i) => Math.round(n / ((n + oldRev[i]) || 1) * 100));
+}
+
+function showStatus(msg, isError) {
+  let el = document.getElementById('data-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'data-status';
+    el.style.cssText = 'position:fixed;bottom:16px;right:16px;padding:8px 14px;border-radius:8px;font-size:12px;z-index:99;transition:opacity 0.5s';
+    document.body.appendChild(el);
+  }
+  el.style.background = isError ? '#FDECEB' : '#E3F5EC';
+  el.style.color = isError ? '#C0392B' : '#1D7A4A';
+  el.textContent = msg;
+  el.style.opacity = '1';
+  if (!isError) setTimeout(() => { el.style.opacity = '0'; }, 3000);
+}
+
+async function loadData() {
+  if (APPS_SCRIPT_URL.includes('YOUR_DEPLOYMENT_ID')) {
+    parseData(FALLBACK);
+    showStatus('⚠ 使用靜態備用資料，請設定 Apps Script 網址', true);
+    buildCharts();
+    updateSummaryCards();
+    updateTable();
+    return;
+  }
+  showStatus('🔄 從 Google Sheet 載入資料…', false);
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    const json = await res.json();
+    parseData(json.data);
+    const now = new Date().toLocaleString('zh-TW', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const el2 = document.getElementById('last-updated');
+    if (el2) el2.textContent = '最後更新：' + now;
+    showStatus('✓ 資料已更新', false);
+  } catch(e) {
+    parseData(FALLBACK);
+    showStatus('⚠ 無法連線，顯示上次資料', true);
+  }
+  buildCharts();
+  updateSummaryCards();
+  updateTable();
+}
+
+function updateSummaryCards() {
+  const totalAd  = adSpend.reduce((a,b) => a+b, 0);
+  const totalMem = newMembers.reduce((a,b) => a+b, 0);
+  const totalRev2 = totalRev.reduce((a,b) => a+b, 0);
+  const avgCpa   = Math.round(totalAd / totalMem);
+  document.getElementById('kpi-ad').textContent    = '$' + totalAd.toLocaleString();
+  document.getElementById('kpi-member').textContent = totalMem;
+  document.getElementById('kpi-rev').textContent   = '$' + totalRev2.toLocaleString();
+  document.getElementById('kpi-cpa').textContent   = '$' + avgCpa.toLocaleString();
+}
+
+function updateTable() {
+  const tbody = document.getElementById('eff-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = months.map((m,i) => {
+    const cpaColor = cpaData[i] > 500 ? 'tag-red' : cpaData[i] > 200 ? 'tag-amber' : 'tag-green';
+    const roasColor = roasData[i] >= 4 ? 'tag-green' : roasData[i] >= 2.5 ? 'tag-amber' : 'tag-red';
+    const badge = cpaData[i] > 500 ? 'tag-red" >CPA 異常高' : roasData[i] >= 4 ? 'tag-green" >效率佳' : 'tag-amber" >持續觀察';
+    return `<tr>
+      <td>${m}</td>
+      <td>$${adSpend[i].toLocaleString()}</td>
+      <td>${newMembers[i]}</td>
+      <td><span class="tag ${cpaColor}">$${cpaData[i].toLocaleString()}</span></td>
+      <td>$${totalRev[i].toLocaleString()}</td>
+      <td><span class="tag ${roasColor}">${roasData[i]}x</span></td>
+      <td><span class="tag ${badge}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => c && c.destroy());
+  charts = {};
+}
+
+function buildCharts() {
+  destroyCharts();
+
+const gridColor = 'rgba(0,0,0,0.06)';
+const tickColor = '#9A9892';
+const baseOpts = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: tickColor, font: { size: 12 }, autoSkip: false }, grid: { color: gridColor } },
+    y: { ticks: { color: tickColor, font: { size: 11 } }, grid: { color: gridColor } }
+  }
+};
+
+function fmt(v) { return '$' + v.toLocaleString(); }
+
+  charts['overview-bar'] = new Chart(document.getElementById('c-overview-bar'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: '廣告花費', data: adSpend, backgroundColor: '#4A7DCC', borderRadius: 5 },
+        { label: '品牌業績', data: totalRev, backgroundColor: '#3BAA6A', borderRadius: 5 }
+      ]
+    },
+    options: { ...baseOpts, scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, ticks: { ...baseOpts.scales.y.ticks, callback: v => '$' + v.toLocaleString() } } } }
+  });
+
+  charts['overview-line'] = new Chart(document.getElementById('c-overview-line'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: '新會員數', data: newMembers,
+        borderColor: '#E07830', backgroundColor: '#FFF0D6',
+        pointRadius: 6, pointHoverRadius: 8,
+        tension: 0.3, fill: true, borderWidth: 2
+      }]
+    },
+    options: { ...baseOpts }
+  });
+
+  charts['rev-stacked'] = new Chart(document.getElementById('c-rev-stacked'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: '新客業績', data: newRev, backgroundColor: '#4A7DCC', borderRadius: 4 },
+        { label: '舊客業績', data: oldRev, backgroundColor: '#B5D4F4', borderRadius: 4 }
+      ]
+    },
+    options: {
+      ...baseOpts,
+      scales: {
+        x: { ...baseOpts.scales.x, stacked: true },
+        y: { ...baseOpts.scales.y, stacked: true, ticks: { callback: v => fmt(v), color: tickColor, font: { size: 11 } } }
+      }
+    }
+  });
+
+  charts['rev-ratio'] = new Chart(document.getElementById('c-rev-ratio'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: '新客佔比', data: newPct,
+        borderColor: '#2AA0A0', backgroundColor: 'rgba(42,160,160,0.1)',
+        pointRadius: 6, tension: 0.3, fill: true, borderWidth: 2
+      }]
+    },
+    options: {
+      ...baseOpts,
+      scales: {
+        x: { ...baseOpts.scales.x },
+        y: { ...baseOpts.scales.y, min: 0, max: 100, ticks: { callback: v => v + '%', color: tickColor, font: { size: 11 } } }
+      }
+    }
+  });
+
+  charts['cpa'] = new Chart(document.getElementById('c-cpa'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'CPA', data: cpaData,
+        borderColor: '#D4537E', backgroundColor: 'rgba(212,83,126,0.08)',
+        pointRadius: 6, tension: 0.3, fill: true, borderWidth: 2
+      }]
+    },
+    options: {
+      ...baseOpts,
+      scales: {
+        x: { ...baseOpts.scales.x },
+        y: { ...baseOpts.scales.y, ticks: { callback: v => '$' + v, color: tickColor, font: { size: 11 } } }
+      }
+    }
+  });
+
+  charts['roas'] = new Chart(document.getElementById('c-roas'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'ROAS', data: roasData,
+        borderColor: '#1D7A4A', backgroundColor: 'rgba(29,122,74,0.08)',
+        pointRadius: 6, tension: 0.3, fill: true, borderWidth: 2
+      }]
+    },
+    options: {
+      ...baseOpts,
+      scales: {
+        x: { ...baseOpts.scales.x },
+        y: { ...baseOpts.scales.y, ticks: { callback: v => v + 'x', color: tickColor, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+loadData();
+</script>
+</body>
+</html>
