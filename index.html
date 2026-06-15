@@ -535,7 +535,7 @@ function parseCSV(text) {
 }
 
 async function loadData() {
-  if (CSV_URL === 'YOUR_GOOGLE_SHEET_CSV_URL') {
+  if (CSV_URL === 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzYNGKEghLnbGzoivou_ekU7PPBzGolKudbB6cExE_xJvD7dFRIOq9GtCrZoY-P6kLeLYEaMVVcPQH/pub?gid=0&single=true&output=csv') {
     parseData(FALLBACK);
     showStatus('⚠ 使用靜態備用資料，請設定 Google Sheet CSV 網址', true);
     buildCharts(); updateSummaryCards(); updateTable();
