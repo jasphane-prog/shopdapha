@@ -3,83 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>月度投放績效分析 2026 / 2–5月</title>
+<title>月度投放績效分析 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   :root {
-    --bg: #f7f6f2; --surface: #ffffff; --border: #e8e6df;
-    --text-primary: #1a1a18; --text-secondary: #6b6a65; --text-muted: #9b9a95;
-    --accent-blue: #185FA5; --blue-light: #E6F1FB;
-    --teal-light: #E1F5EE; --amber-light: #FAEEDA;
-    --warning: #854F0B; --success: #0F6E56;
-    --radius: 10px; --radius-sm: 6px;
+    --bg:#f7f6f2;--surface:#fff;--border:#e8e6df;
+    --text-primary:#1a1a18;--text-secondary:#6b6a65;--text-muted:#9b9a95;
+    --accent-blue:#185FA5;--blue-light:#E6F1FB;
+    --teal-light:#E1F5EE;--amber-light:#FAEEDA;
+    --warning:#854F0B;--success:#0F6E56;--danger:#A32D2D;
+    --edit-bg:#FFF8E6;--edit-border:#F0C040;
+    --radius:10px;--radius-sm:6px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.6; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 24px 16px; position: sticky; top: 0; z-index: 100; }
-  .header-inner { max-width: 960px; margin: 0 auto; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-  .header-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-  .header-sub { font-size: 12px; color: var(--text-secondary); }
-  .refresh-btn { font-size: 12px; color: var(--accent-blue); border: 1px solid var(--border); background: none; padding: 4px 10px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
-  .refresh-btn:hover { background: var(--blue-light); }
-  nav { background: var(--surface); border-bottom: 1px solid var(--border); }
-  .nav-inner { max-width: 960px; margin: 0 auto; display: flex; overflow-x: auto; }
-  .nav-btn { font-size: 13px; padding: 10px 18px; border: none; background: none; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s, border-color .15s; }
-  .nav-btn.active { color: var(--text-primary); border-bottom-color: var(--text-primary); font-weight: 500; }
-  .nav-btn:hover:not(.active) { color: var(--text-primary); }
-  main { max-width: 960px; margin: 0 auto; padding: 28px 20px 60px; }
-  .section { display: none; }
-  .section.visible { display: block; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 28px; }
-  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
-  .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
-  .kpi-value { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
-  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 20px; }
-  .chart-card-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-  .chart-card-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
-  .chart-wrap { position: relative; width: 100%; }
-  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); }
-  .legend-item { display: flex; align-items: center; gap: 5px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-  .data-table-wrap { overflow-x: auto; }
-  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .data-table th { text-align: right; padding: 8px 12px; color: var(--text-muted); font-weight: 400; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  .data-table th:first-child { text-align: left; }
-  .data-table td { text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  .data-table td:first-child { text-align: left; color: var(--text-secondary); }
-  .data-table tr:last-child td { border-bottom: none; }
-  .data-table .total-row td { font-weight: 600; background: var(--bg); color: var(--text-primary) !important; }
-  .insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 4px; }
-  .insight-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
-  .insight-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
-  .insight-body { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
-  .badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 10px; margin-bottom: 6px; }
-  .badge-warn { background: var(--amber-light); color: var(--warning); }
-  .badge-ok   { background: var(--teal-light);  color: var(--success); }
-  .badge-info { background: var(--blue-light);   color: var(--accent-blue); }
-  .section-h { font-size: 15px; font-weight: 600; margin: 28px 0 14px; }
-  .section-h:first-child { margin-top: 0; }
-  .action-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-  .action-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; display: flex; gap: 10px; align-items: flex-start; }
-  .action-num { font-size: 11px; font-weight: 600; color: var(--text-muted); min-width: 18px; padding-top: 1px; }
-  /* loading */
-  .loading-bar { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 13px; }
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 10px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .last-updated { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  @media (max-width: 600px) { .kpi-value { font-size: 22px; } main { padding: 18px 14px 50px; } }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;background:var(--bg);color:var(--text-primary);font-size:14px;line-height:1.6;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;position:sticky;top:0;z-index:100;}
+  .header-inner{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .header-title{font-size:17px;font-weight:600;}
+  .header-sub{font-size:12px;color:var(--text-secondary);margin-top:2px;}
+  .header-actions{display:flex;gap:8px;align-items:center;}
+  .btn{font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:none;white-space:nowrap;transition:all .15s;}
+  .btn-edit{color:var(--accent-blue);border-color:var(--accent-blue);}
+  .btn-edit:hover{background:var(--blue-light);}
+  .btn-save{color:#fff;background:#185FA5;border-color:#185FA5;display:none;}
+  .btn-save:hover{background:#1252a3;}
+  .btn-cancel{color:var(--danger);border-color:var(--danger);display:none;}
+  .btn-cancel:hover{background:#fdf0f0;}
+  .edit-banner{background:var(--edit-bg);border-bottom:1px solid var(--edit-border);padding:8px 24px;font-size:12px;color:var(--warning);display:none;text-align:center;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);}
+  .nav-inner{max-width:980px;margin:0 auto;display:flex;overflow-x:auto;}
+  .nav-btn{font-size:13px;padding:10px 18px;border:none;background:none;cursor:pointer;color:var(--text-secondary);border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .nav-btn.active{color:var(--text-primary);border-bottom-color:var(--text-primary);font-weight:500;}
+  main{max-width:980px;margin:0 auto;padding:24px 20px 60px;}
+  .section{display:none;}.section.visible{display:block;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+  .kpi-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+  .kpi-value{font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1;}
+  .kpi-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:20px;}
+  .chart-card-title{font-size:13px;font-weight:500;margin-bottom:3px;}
+  .chart-card-sub{font-size:11px;color:var(--text-muted);margin-bottom:14px;}
+  .chart-wrap{position:relative;width:100%;}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;font-size:12px;color:var(--text-secondary);}
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .data-table-wrap{overflow-x:auto;}
+  .data-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .data-table th{text-align:right;padding:8px 12px;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);white-space:nowrap;}
+  .data-table th:first-child{text-align:left;}
+  .data-table td{text-align:right;padding:6px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  .data-table td:first-child{text-align:left;color:var(--text-secondary);}
+  .data-table tr:last-child td{border-bottom:none;}
+  .data-table .total-row td{font-weight:600;background:var(--bg);color:var(--text-primary)!important;}
+  /* Editable cells */
+  .edit-mode .editable{background:var(--edit-bg);border:1px solid var(--edit-border);border-radius:4px;padding:3px 6px;min-width:70px;text-align:right;cursor:text;transition:background .15s;}
+  .edit-mode .editable:focus{outline:2px solid #F0C040;background:#fff;}
+  .editable{padding:3px 0;}
+  /* Edit panel */
+  .edit-panel{background:var(--edit-bg);border:1px solid var(--edit-border);border-radius:var(--radius);padding:20px 22px;margin-bottom:20px;display:none;}
+  .edit-mode .edit-panel{display:block;}
+  .edit-panel-title{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--warning);}
+  .edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+  .edit-group label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+  .edit-group input{width:100%;border:1px solid var(--edit-border);border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;background:#fff;}
+  .edit-group input:focus{outline:2px solid #F0C040;}
+  .section-h{font-size:15px;font-weight:600;margin:24px 0 12px;}
+  .section-h:first-child{margin-top:0;}
+  .insight-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+  .insight-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+  .insight-title{font-size:13px;font-weight:500;margin-bottom:6px;}
+  .insight-body{font-size:12px;color:var(--text-secondary);line-height:1.65;}
+  .badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:10px;margin-bottom:6px;}
+  .badge-warn{background:var(--amber-light);color:var(--warning);}
+  .badge-ok{background:var(--teal-light);color:var(--success);}
+  .badge-info{background:var(--blue-light);color:var(--accent-blue);}
+  .action-list{list-style:none;display:flex;flex-direction:column;gap:10px;}
+  .action-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start;}
+  .action-num{font-size:11px;font-weight:600;color:var(--text-muted);min-width:18px;padding-top:1px;}
+  @media(max-width:600px){.kpi-value{font-size:22px;}main{padding:16px 14px 50px;}}
 </style>
 </head>
 <body>
+
+<div class="edit-banner" id="editBanner">✏️ 編輯模式：修改下方數字後，按右上角「儲存更新」套用到圖表</div>
 
 <header>
   <div class="header-inner">
     <div>
       <div class="header-title">月度投放績效分析</div>
-      <div class="header-sub">大法商城 · 2026 年 2–5 月 <span class="last-updated" id="lastUpdated"></span></div>
+      <div class="header-sub" id="headerSub">大法商城 · 2026 年 2–5 月</div>
     </div>
-    <button class="refresh-btn" onclick="loadData()">↻ 重新整理</button>
+    <div class="header-actions">
+      <button class="btn btn-cancel" id="btnCancel" onclick="cancelEdit()">✕ 取消</button>
+      <button class="btn btn-save"   id="btnSave"   onclick="saveEdit()">✓ 儲存更新</button>
+      <button class="btn btn-edit"   id="btnEdit"   onclick="enterEdit()">✏️ 編輯資料</button>
+    </div>
   </div>
 </header>
 
@@ -93,119 +112,92 @@
   </div>
 </nav>
 
-<main id="mainContent">
-  <div class="loading-bar">
-    <div class="spinner"></div><br>載入資料中…
-  </div>
-</main>
+<main id="mainContent"></main>
 
 <script>
-// ── 品牌業績資料（從 Google Sheet 更新於 2026/6/16）──────
-// 如需更新：直接修改下方數字，再 push 到 GitHub 即可
-const BRAND_DATA = {
-  brands: ['易利氣', '益生菌', 'SLIMWALK', '其他品項'],
-  // data[月份index][品牌index]，月份順序：2月、3月、4月、5月
-  data: [
-    [6309,  11957, 3539, 0  ],  // 2月
-    [7724,  16239, 9295, 360],  // 3月
-    [6937,  24273, 7331, 0  ],  // 4月
-    [3198,  8258,  1679, 0  ],  // 5月
-  ]
+// ══════════════════════════════════════════════
+// 資料（更新時間：2026/6/16）
+// ══════════════════════════════════════════════
+let D = {
+  months: ['2月','3月','4月','5月'],
+  adSpend:  [861,   19911, 21184, 6321],
+  members:  [20,    44,    16,    23],
+  revenue:  [3642,  33618, 43072, 14081],
+  newRev:   [3223,  18569, 28912, 12099],
+  oldRev:   [419,   15049, 14160, 1982],
+  brands:   ['易利氣','益生菌','SLIMWALK','其他品項'],
+  // brandData[monthIdx][brandIdx]
+  brandData:[
+    [6309,  11957, 3539, 0  ],
+    [7724,  16239, 9295, 360],
+    [6937,  24273, 7331, 0  ],
+    [3198,  8258,  1679, 0  ],
+  ],
 };
 
-// 靜態資料（總覽、結構、效率頁面用，來自原始記錄）
-const STATIC = {
-  adSpend:  [861, 19911, 21184, 6321],
-  members:  [20, 44, 16, 23],
-  revenue:  [3642, 33618, 43072, 14081],
-  newRev:   [3223, 18569, 28912, 12099],
-  oldRev:   [419,  15049, 14160, 1982],
-  newRatio: [89, 55, 67, 86],
-  cpa:      [43, 453, 1324, 275],
-  roas:     [4.2, 1.7, 2.0, 2.2],
-};
-
-const MONTHS = ['2月','3月','4月','5月'];
-const BRAND_COLORS = ['#378ADD','#1D9E75','#D85A30','#B4B2A9'];
-const gridColor = 'rgba(136,135,128,0.15)';
+const COLORS = ['#378ADD','#1D9E75','#D85A30','#B4B2A9'];
+const GC = 'rgba(136,135,128,0.15)';
 let charts = {};
+let editSnapshot = null;
 
-// ── CSV 解析 ──────────────────────────────────────
-function parseVal(s) {
-  // 去除 $、空格、逗號後轉數字
-  return Number(String(s).replace(/[\$,\s\-]/g, '') || 0);
+// ── Utils ──
+const fmt  = n => '$' + Math.round(n).toLocaleString();
+const pct  = n => n.toFixed(1) + '%';
+const sum  = arr => arr.reduce((a,b)=>a+b,0);
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function mkChart(id,cfg){destroyChart(id);const el=document.getElementById(id);if(el)charts[id]=new Chart(el,cfg);}
+
+const barBase = cb => ({
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:cb}}},
+  scales:{x:{ticks:{autoSkip:false},grid:{display:false}},y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:GC}}}
+});
+
+// ── Derived ──
+function derived(){
+  const totalAd  = sum(D.adSpend);
+  const totalMem = sum(D.members);
+  const totalRev = sum(D.revenue);
+  const avgCpa   = Math.round(totalAd/totalMem);
+  const monthTotals = D.months.map((_,m)=>sum(D.brandData[m]));
+  const brandTotals = D.brands.map((_,bi)=>D.months.reduce((_,__,m)=>_+D.brandData[m][bi],0));
+  const grandTotal  = sum(brandTotals);
+  const topBrand    = D.brands[brandTotals.indexOf(Math.max(...brandTotals))];
+  const cpa  = D.adSpend.map((a,i)=>Math.round(a/D.members[i]));
+  const roas = D.adSpend.map((a,i)=>+(D.revenue[i]/a).toFixed(1));
+  const newRatio = D.newRev.map((n,i)=>Math.round(n/D.revenue[i]*100));
+  return {totalAd,totalMem,totalRev,avgCpa,monthTotals,brandTotals,grandTotal,topBrand,cpa,roas,newRatio};
 }
 
-function parseCSV(text) {
-  const rows = text.trim().split('\n').map(r =>
-    r.split(',').map(c => c.trim().replace(/^"|"$/g, ''))
-  );
-  // 第一列是 header (brand, 2m, 3m, 4m, 5m)
-  // 從第二列開始是資料
-  const brands = [];
-  const data   = [[], [], [], []]; // index 0=m2, 1=m3, 2=m4, 3=m5
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row[0]) continue;
-    brands.push(row[0]);
-    for (let m = 0; m < 4; m++) {
-      data[m].push(parseVal(row[m + 1]));
-    }
-  }
-  return { brands, data };
-}
-
-// ── 工具函式 ──────────────────────────────────────
-function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
-function pct(n) { return n.toFixed(1) + '%'; }
-
-function destroyChart(id) {
-  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
-}
-
-function makeChart(id, config) {
-  destroyChart(id);
-  const el = document.getElementById(id);
-  if (!el) return;
-  charts[id] = new Chart(el, config);
-}
-
-// ── 渲染 ──────────────────────────────────────────
-function render({ brands, data }) {
-  // data[monthIdx][brandIdx]
-  // 計算每月小計
-  const monthTotals = [0,1,2,3].map(m =>
-    data[m].reduce((a, b) => a + b, 0)
-  );
-  // 各品牌累計
-  const brandTotals = brands.map((_, bi) =>
-    [0,1,2,3].reduce((a, m) => a + data[m][bi], 0)
-  );
-  const grandTotal = brandTotals.reduce((a, b) => a + b, 0);
-  const topIdx = brandTotals.indexOf(Math.max(...brandTotals));
-
-  // 總覽 KPI（使用靜態投放資料）
-  const totalAd  = STATIC.adSpend.reduce((a,b)=>a+b,0);
-  const totalMem = STATIC.members.reduce((a,b)=>a+b,0);
-  const totalRev = STATIC.revenue.reduce((a,b)=>a+b,0);
-  const avgCpa   = Math.round(totalAd / totalMem);
-
-  // 品牌 dataset (by month)
-  const brandDatasets = brands.map((b, bi) => ({
-    label: b,
-    data: [0,1,2,3].map(m => data[m][bi]),
-    backgroundColor: BRAND_COLORS[bi] || '#888',
-    borderRadius: 3,
-  }));
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function render(){
+  const x = derived();
+  const M = D.months;
 
   document.getElementById('mainContent').innerHTML = `
   <!-- 總覽 -->
   <section id="tab-overview" class="section visible">
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">廣告總花費</div><div class="kpi-value">${fmt(totalAd)}</div><div class="kpi-sub">各月合計</div></div>
-      <div class="kpi-card"><div class="kpi-label">新會員加入數</div><div class="kpi-value">${totalMem}</div><div class="kpi-sub">各月合計</div></div>
-      <div class="kpi-card"><div class="kpi-label">品牌總業績</div><div class="kpi-value">${fmt(totalRev)}</div><div class="kpi-sub">各月合計</div></div>
-      <div class="kpi-card"><div class="kpi-label">平均 CPA</div><div class="kpi-value">${fmt(avgCpa)}</div><div class="kpi-sub">每位新會員廣告成本</div></div>
+      <div class="kpi-card"><div class="kpi-label">廣告總花費</div><div class="kpi-value">${fmt(x.totalAd)}</div><div class="kpi-sub">各月合計</div></div>
+      <div class="kpi-card"><div class="kpi-label">新會員加入數</div><div class="kpi-value">${x.totalMem}</div><div class="kpi-sub">各月合計</div></div>
+      <div class="kpi-card"><div class="kpi-label">品牌總業績</div><div class="kpi-value">${fmt(x.totalRev)}</div><div class="kpi-sub">各月合計</div></div>
+      <div class="kpi-card"><div class="kpi-label">平均 CPA</div><div class="kpi-value">${fmt(x.avgCpa)}</div><div class="kpi-sub">每位新會員廣告成本</div></div>
+    </div>
+    <!-- 編輯面板：總覽 -->
+    <div class="edit-panel">
+      <div class="edit-panel-title">✏️ 編輯每月廣告花費 / 新會員數 / 總業績</div>
+      <div class="edit-grid">
+        ${M.map((m,i)=>`
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">${m}</div>
+          <div class="edit-group"><label>廣告花費</label><input type="number" id="ad_${i}" value="${D.adSpend[i]}"></div>
+          <div class="edit-group" style="margin-top:8px"><label>新會員數</label><input type="number" id="mem_${i}" value="${D.members[i]}"></div>
+          <div class="edit-group" style="margin-top:8px"><label>總業績</label><input type="number" id="rev_${i}" value="${D.revenue[i]}"></div>
+        </div>`).join('')}
+      </div>
     </div>
     <div class="chart-card">
       <div class="chart-card-title">廣告花費 vs 品牌業績</div>
@@ -226,38 +218,59 @@ function render({ brands, data }) {
   <!-- 品牌業績 -->
   <section id="tab-brand" class="section">
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">最大貢獻品牌</div><div class="kpi-value" style="font-size:20px;margin-top:4px">${brands[topIdx]}</div><div class="kpi-sub">累計佔比 ${pct(brandTotals[topIdx]/grandTotal*100)}</div></div>
-      ${brands.map((b,bi)=>`<div class="kpi-card"><div class="kpi-label">${b} 累計</div><div class="kpi-value">${fmt(brandTotals[bi])}</div><div class="kpi-sub">佔比 ${pct(brandTotals[bi]/grandTotal*100)}</div></div>`).join('')}
+      <div class="kpi-card"><div class="kpi-label">最大貢獻品牌</div><div class="kpi-value" style="font-size:20px;margin-top:4px">${x.topBrand}</div><div class="kpi-sub">累計佔比 ${pct(Math.max(...x.brandTotals)/x.grandTotal*100)}</div></div>
+      ${D.brands.map((b,bi)=>`<div class="kpi-card"><div class="kpi-label">${b} 累計</div><div class="kpi-value">${fmt(x.brandTotals[bi])}</div><div class="kpi-sub">佔比 ${pct(x.brandTotals[bi]/x.grandTotal*100)}</div></div>`).join('')}
+    </div>
+    <!-- 編輯面板：品牌 -->
+    <div class="edit-panel">
+      <div class="edit-panel-title">✏️ 編輯各品牌月業績</div>
+      <div class="edit-grid">
+        ${M.map((m,mi)=>`
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">${m}</div>
+          ${D.brands.map((b,bi)=>`<div class="edit-group" style="margin-top:6px"><label>${b}</label><input type="number" id="br_${mi}_${bi}" value="${D.brandData[mi][bi]}"></div>`).join('')}
+        </div>`).join('')}
+      </div>
     </div>
     <div class="chart-card">
       <div class="chart-card-title">各品牌月業績對比</div>
       <div class="chart-card-sub">分組長條圖（元）</div>
-      <div class="legend">${brands.map((b,bi)=>`<span class="legend-item"><span class="legend-dot" style="background:${BRAND_COLORS[bi]||'#888'}"></span>${b}</span>`).join('')}</div>
+      <div class="legend">${D.brands.map((b,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${COLORS[i]}"></span>${b}</span>`).join('')}</div>
       <div class="chart-wrap" style="height:300px"><canvas id="brandGroupChart"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-card-title">各品牌業績構成比例（堆疊）</div>
       <div class="chart-card-sub">每月品牌貢獻比較</div>
-      <div class="legend">${brands.map((b,bi)=>`<span class="legend-item"><span class="legend-dot" style="background:${BRAND_COLORS[bi]||'#888'}"></span>${b}</span>`).join('')}</div>
+      <div class="legend">${D.brands.map((b,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${COLORS[i]}"></span>${b}</span>`).join('')}</div>
       <div class="chart-wrap" style="height:280px"><canvas id="brandStackChart"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-card-title">累計業績明細</div>
-      <div class="chart-card-sub">來源：Google Sheet 即時資料</div>
-      <div class="data-table-wrap">
-        <table class="data-table">
-          <thead><tr><th>品牌</th>${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>累計</th><th>佔比</th></tr></thead>
-          <tbody>
-            ${brands.map((b,bi)=>`<tr><td>${b}</td>${[0,1,2,3].map(m=>`<td>${fmt(data[m][bi])}</td>`).join('')}<td>${fmt(brandTotals[bi])}</td><td>${pct(brandTotals[bi]/grandTotal*100)}</td></tr>`).join('')}
-            <tr class="total-row"><td>月份小計</td>${monthTotals.map(t=>`<td>${fmt(t)}</td>`).join('')}<td>${fmt(grandTotal)}</td><td>100%</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="chart-card-sub">（元）</div>
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>品牌</th>${M.map(m=>`<th>${m}</th>`).join('')}<th>累計</th><th>佔比</th></tr></thead>
+        <tbody>
+          ${D.brands.map((b,bi)=>`<tr><td>${b}</td>${M.map((_,mi)=>`<td>${fmt(D.brandData[mi][bi])}</td>`).join('')}<td>${fmt(x.brandTotals[bi])}</td><td>${pct(x.brandTotals[bi]/x.grandTotal*100)}</td></tr>`).join('')}
+          <tr class="total-row"><td>月份小計</td>${x.monthTotals.map(t=>`<td>${fmt(t)}</td>`).join('')}<td>${fmt(x.grandTotal)}</td><td>100%</td></tr>
+        </tbody>
+      </table></div>
     </div>
   </section>
 
   <!-- 業績結構 -->
   <section id="tab-structure" class="section">
+    <!-- 編輯面板：結構 -->
+    <div class="edit-panel">
+      <div class="edit-panel-title">✏️ 編輯新客 / 舊客業績</div>
+      <div class="edit-grid">
+        ${M.map((m,i)=>`
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">${m}</div>
+          <div class="edit-group"><label>新客業績（估）</label><input type="number" id="newrev_${i}" value="${D.newRev[i]}"></div>
+          <div class="edit-group" style="margin-top:8px"><label>舊客業績（估）</label><input type="number" id="oldrev_${i}" value="${D.oldRev[i]}"></div>
+        </div>`).join('')}
+      </div>
+    </div>
     <div class="chart-card">
       <div class="chart-card-title">每月業績結構：新客 vs 舊客</div>
       <div class="chart-card-sub">依訂單檔新舊客比例估算</div>
@@ -274,14 +287,12 @@ function render({ brands, data }) {
     </div>
     <div class="chart-card">
       <div class="chart-card-sub" style="margin-bottom:12px">※ 新客 / 舊客業績以同月訂單檔新舊客比例估算</div>
-      <div class="data-table-wrap">
-        <table class="data-table">
-          <thead><tr><th>月份</th><th>新客業績（估）</th><th>舊客業績（估）</th><th>總業績</th><th>新客佔比</th></tr></thead>
-          <tbody>
-            ${MONTHS.map((m,i)=>`<tr><td>${m}</td><td>${fmt(STATIC.newRev[i])}</td><td>${fmt(STATIC.oldRev[i])}</td><td>${fmt(STATIC.revenue[i])}</td><td>${STATIC.newRatio[i]}%</td></tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>月份</th><th>新客業績（估）</th><th>舊客業績（估）</th><th>總業績</th><th>新客佔比</th></tr></thead>
+        <tbody>
+          ${M.map((m,i)=>`<tr><td>${m}</td><td>${fmt(D.newRev[i])}</td><td>${fmt(D.oldRev[i])}</td><td>${fmt(D.revenue[i])}</td><td>${x.newRatio[i]}%</td></tr>`).join('')}
+        </tbody>
+      </table></div>
     </div>
   </section>
 
@@ -298,127 +309,161 @@ function render({ brands, data }) {
       <div class="chart-wrap" style="height:220px"><canvas id="roasChart"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="data-table-wrap">
-        <table class="data-table">
-          <thead><tr><th>月份</th><th>廣告花費</th><th>新會員數</th><th>CPA</th><th>總業績</th><th>ROAS</th><th>效率評估</th></tr></thead>
-          <tbody>
-            <tr><td>2月</td><td>$861</td><td>20</td><td>$43</td><td>$3,642</td><td>4.2x</td><td>淡季參考</td></tr>
-            <tr><td>3月</td><td>$19,911</td><td>44</td><td>$453</td><td>$33,618</td><td>1.7x</td><td>新客最多</td></tr>
-            <tr><td>4月</td><td>$21,184</td><td>16</td><td>$1,324</td><td>$43,072</td><td>2.0x</td><td>⚠ CPA 異常</td></tr>
-            <tr><td>5月</td><td>$6,321</td><td>23</td><td>$275</td><td>$14,081</td><td>2.2x</td><td>5/11 暫停</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>月份</th><th>廣告花費</th><th>新會員數</th><th>CPA</th><th>總業績</th><th>ROAS</th></tr></thead>
+        <tbody>
+          ${M.map((m,i)=>`<tr><td>${m}</td><td>${fmt(D.adSpend[i])}</td><td>${D.members[i]}</td><td>${fmt(x.cpa[i])}</td><td>${fmt(D.revenue[i])}</td><td>${x.roas[i]}x</td></tr>`).join('')}
+        </tbody>
+      </table></div>
     </div>
   </section>
 
   <!-- 分析建議 -->
   <section id="tab-suggest" class="section">
     <div class="insight-grid">
-      <div class="insight-card"><div class="badge badge-warn">⚠ 注意</div><div class="insight-title">4月 CPA 異常高（$891/人）</div><div class="insight-body">廣告花費 $21,184 但僅帶入 16 位新會員，CPA 高達 $1,324，是全期最差的獲客效率。建議拉出 4 月廣告後台細看哪組素材或受眾拖累效率。</div></div>
-      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">5月廣告效率大幅改善（CPA $132）</div><div class="insight-body">預算 $6,321，帶入 23 位新會員（CPA $275），5/11 後暫停投放。投放期間效率尚可，值得分析暫停前的素材設定作為參考基準。</div></div>
-      <div class="insight-card"><div class="badge badge-info">ℹ 背景</div><div class="insight-title">2月幾乎無廣告投放（$431）</div><div class="insight-body">業績僅 $3,642，推測受農曆年假影響為消費淡季。此月 CPA 低（$11）僅因花費極少，不具參考性。可將 2 月預算提前挪至 3 月旺季。</div></div>
-      <div class="insight-card"><div class="badge badge-warn">⚠ 注意</div><div class="insight-title">新客業績佔比持續偏高（55–89%）</div><div class="insight-body">各月新客業績貢獻均超過 55%，顯示品牌高度依賴新客。建議加強舊客回購機制，例如定期 LINE 推播、購買後回購提醒、會員獨家折扣。</div></div>
-      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">3月廣告業績連動明顯</div><div class="insight-body">3 月廣告花費 $19,911，帶動業績至 $33,618，新客 44 人為全期最高。整體業績規模是全期最佳，適合每年 Q1 末做大型投放。</div></div>
-      <div class="insight-card"><div class="badge badge-info">ℹ 品牌</div><div class="insight-title">${brands[topIdx]} 為最大業績來源</div><div class="insight-body">累計業績 ${fmt(brandTotals[topIdx])}，佔四個月總業績 ${pct(brandTotals[topIdx]/grandTotal*100)}，是各品牌中業績最高者。</div></div>
+      <div class="insight-card"><div class="badge badge-warn">⚠ 注意</div><div class="insight-title">4月 CPA 異常高（${fmt(x.cpa[2])}/人）</div><div class="insight-body">廣告花費 ${fmt(D.adSpend[2])} 但僅帶入 ${D.members[2]} 位新會員，是全期最差的獲客效率。建議拉出 4 月廣告後台細看哪組素材或受眾拖累效率。</div></div>
+      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">3月新客最多（${D.members[1]}人）</div><div class="insight-body">3 月廣告花費 ${fmt(D.adSpend[1])}，帶動業績至 ${fmt(D.revenue[1])}（ROAS ${x.roas[1]}x），新客 ${D.members[1]} 人為全期最高。整體業績規模是全期最佳。</div></div>
+      <div class="insight-card"><div class="badge badge-info">ℹ 背景</div><div class="insight-title">2月廣告規模較小（${fmt(D.adSpend[0])}）</div><div class="insight-body">業績 ${fmt(D.revenue[0])}，推測受農曆年假影響為消費淡季。可將 2 月預算提前挪至 3 月旺季。</div></div>
+      <div class="insight-card"><div class="badge badge-warn">⚠ 注意</div><div class="insight-title">新客業績佔比持續偏高</div><div class="insight-body">各月新客業績貢獻均超過 55%，顯示品牌高度依賴新客。建議加強舊客回購機制，例如定期 LINE 推播、會員獨家折扣。</div></div>
+      <div class="insight-card"><div class="badge badge-info">ℹ 品牌</div><div class="insight-title">${x.topBrand} 為最大業績來源</div><div class="insight-body">累計業績 ${fmt(Math.max(...x.brandTotals))}，佔四個月總業績 ${pct(Math.max(...x.brandTotals)/x.grandTotal*100)}，為主力品牌，建議規劃專屬促購活動鞏固佔比。</div></div>
+      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">4月業績為全期最高（${fmt(D.revenue[2])}）</div><div class="insight-body">4 月單月業績達 ${fmt(D.revenue[2])}，為全期最高。雖然 CPA 偏高，但業績規模最大，顯示該月整體轉換仍強。</div></div>
     </div>
     <p class="section-h">建議行動</p>
     <ul class="action-list">
       <li class="action-item"><span class="action-num">01</span><span>深入分析 4 月廣告素材與受眾，找出 CPA 偏高原因，避免重蹈覆轍</span></li>
-      <li class="action-item"><span class="action-num">02</span><span>複製 5 月高效投放策略：保留該月的受眾設定與出價邏輯</span></li>
+      <li class="action-item"><span class="action-num">02</span><span>3 月投放效果最佳（新客最多），保留該月的受眾設定與出價邏輯</span></li>
       <li class="action-item"><span class="action-num">03</span><span>建立舊客回購計畫（EDM / LINE / 會員專屬促銷），降低對新客的業績依賴</span></li>
       <li class="action-item"><span class="action-num">04</span><span>2 月預算縮減，資源集中於 3 月旺季前兩週衝新客</span></li>
-      <li class="action-item"><span class="action-num">05</span><span>設定 CPA 警示上限（建議 $400），超標時自動暫停廣告組或通知審查</span></li>
-      <li class="action-item"><span class="action-num">06</span><span>${brands[topIdx]} 為主力品牌，建議規劃專屬促購活動或訂閱方案，鞏固業績佔比</span></li>
+      <li class="action-item"><span class="action-num">05</span><span>設定 CPA 警示上限，超標時自動暫停廣告組或通知審查</span></li>
+      <li class="action-item"><span class="action-num">06</span><span>${x.topBrand} 為主力品牌，建議規劃專屬促購活動或訂閱方案，鞏固業績佔比</span></li>
     </ul>
   </section>`;
 
-  // ── 畫圖 ──────────────────────────────────────────
-  const barOpts = (label, cb) => ({
-    responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: cb }}},
-    scales:{ x:{ticks:{autoSkip:false}, grid:{display:false}}, y:{ticks:{callback:v=>'$'+v.toLocaleString()}, grid:{color:gridColor}} }
+  // ── Charts ──
+  mkChart('overviewChart',{type:'bar',data:{labels:M,datasets:[
+    {label:'廣告花費',data:D.adSpend,backgroundColor:'#378ADD',borderRadius:3},
+    {label:'品牌業績',data:D.revenue,backgroundColor:'#1D9E75',borderRadius:3}
+  ]},options:barBase(c=>c.dataset.label+': $'+c.parsed.y.toLocaleString())});
+
+  mkChart('memberChart',{type:'bar',data:{labels:M,datasets:[
+    {label:'新會員數',data:D.members,backgroundColor:'#534AB7',borderRadius:3}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'新會員：'+c.parsed.y+'人'}}},
+    scales:{x:{ticks:{autoSkip:false},grid:{display:false}},y:{ticks:{stepSize:10},grid:{color:GC}}}}});
+
+  const bdSets = D.brands.map((b,bi)=>({label:b,data:M.map((_,mi)=>D.brandData[mi][bi]),backgroundColor:COLORS[bi],borderRadius:3}));
+  mkChart('brandGroupChart',{type:'bar',data:{labels:M,datasets:bdSets},options:barBase(c=>c.dataset.label+': $'+c.parsed.y.toLocaleString())});
+  mkChart('brandStackChart',{type:'bar',data:{labels:M,datasets:bdSets.map(d=>({...d,borderRadius:0}))},options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': $'+c.parsed.y.toLocaleString()}}},
+    scales:{x:{ticks:{autoSkip:false},grid:{display:false},stacked:true},y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:GC},stacked:true}}}});
+
+  mkChart('structureChart',{type:'bar',data:{labels:M,datasets:[
+    {label:'新客業績（估）',data:D.newRev,backgroundColor:'#378ADD'},
+    {label:'舊客業績（估）',data:D.oldRev,backgroundColor:'#B4B2A9'}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': $'+c.parsed.y.toLocaleString()}}},
+    scales:{x:{ticks:{autoSkip:false},grid:{display:false},stacked:true},y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:GC},stacked:true}}}});
+
+  mkChart('newRatioChart',{type:'line',data:{labels:M,datasets:[{
+    label:'新客佔比',data:x.newRatio,borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',
+    pointBackgroundColor:'#378ADD',pointRadius:5,fill:true,tension:0.3
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'新客佔比：'+c.parsed.y+'%'}}},
+    scales:{x:{ticks:{autoSkip:false},grid:{display:false}},y:{min:0,max:100,ticks:{callback:v=>v+'%'},grid:{color:GC}}}}});
+
+  mkChart('cpaChart',{type:'bar',data:{labels:M,datasets:[{
+    label:'CPA（元/人）',data:x.cpa,
+    backgroundColor:x.cpa.map(v=>v===Math.min(...x.cpa)?'#1D9E75':v===Math.max(...x.cpa)?'#D85A30':'#378ADD'),borderRadius:3
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'CPA：$'+c.parsed.y+'/人'}}},
+    scales:{x:{ticks:{autoSkip:false},grid:{display:false}},y:{ticks:{callback:v=>'$'+v},grid:{color:GC}}}}});
+
+  mkChart('roasChart',{type:'line',data:{labels:M,datasets:[{
+    label:'ROAS',data:x.roas,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',
+    pointBackgroundColor:'#1D9E75',pointRadius:5,fill:true,tension:0.3
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'ROAS：'+c.parsed.y+'x'}}},
+    scales:{x:{ticks:{autoSkip:false},grid:{display:false}},y:{ticks:{callback:v=>v+'x'},grid:{color:GC}}}}});
+
+  // re-apply edit mode UI if needed
+  if(document.body.classList.contains('edit-mode')) applyEditUI();
+}
+
+// ══════════════════════════════════════════════
+// EDIT MODE
+// ══════════════════════════════════════════════
+function enterEdit(){
+  editSnapshot = JSON.parse(JSON.stringify(D));
+  document.body.classList.add('edit-mode');
+  document.getElementById('editBanner').style.display='block';
+  document.getElementById('btnEdit').style.display='none';
+  document.getElementById('btnSave').style.display='inline-block';
+  document.getElementById('btnCancel').style.display='inline-block';
+}
+
+function applyEditUI(){
+  // already rendered with edit-panel visible via CSS
+}
+
+function saveEdit(){
+  const M = D.months;
+  // Read overview inputs
+  M.forEach((_,i)=>{
+    const ad  = document.getElementById('ad_'+i);
+    const mem = document.getElementById('mem_'+i);
+    const rev = document.getElementById('rev_'+i);
+    if(ad)  D.adSpend[i]  = +ad.value  || D.adSpend[i];
+    if(mem) D.members[i]  = +mem.value || D.members[i];
+    if(rev) D.revenue[i]  = +rev.value || D.revenue[i];
+  });
+  // Read brand inputs
+  M.forEach((_,mi)=>{
+    D.brands.forEach((_,bi)=>{
+      const el = document.getElementById(`br_${mi}_${bi}`);
+      if(el) D.brandData[mi][bi] = +el.value || 0;
+    });
+  });
+  // Read structure inputs
+  M.forEach((_,i)=>{
+    const nr = document.getElementById('newrev_'+i);
+    const or = document.getElementById('oldrev_'+i);
+    if(nr) D.newRev[i] = +nr.value || D.newRev[i];
+    if(or) D.oldRev[i] = +or.value || D.oldRev[i];
   });
 
-  makeChart('overviewChart', { type:'bar', data:{ labels:MONTHS,
-    datasets:[
-      { label:'廣告花費', data:STATIC.adSpend, backgroundColor:'#378ADD', borderRadius:3 },
-      { label:'品牌業績', data:STATIC.revenue, backgroundColor:'#1D9E75', borderRadius:3 }
-    ]}, options: barOpts('', c=>c.dataset.label+': $'+c.parsed.y.toLocaleString()) });
+  exitEditMode();
+  render();
 
-  makeChart('memberChart', { type:'bar', data:{ labels:MONTHS,
-    datasets:[{ label:'新會員數', data:STATIC.members, backgroundColor:'#534AB7', borderRadius:3 }]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>'新會員：'+c.parsed.y+'人' }}},
-      scales:{ x:{ticks:{autoSkip:false},grid:{display:false}}, y:{ticks:{stepSize:10},grid:{color:gridColor}} }} });
-
-  makeChart('brandGroupChart', { type:'bar', data:{ labels:MONTHS, datasets: brandDatasets },
-    options: barOpts('', c=>c.dataset.label+': $'+c.parsed.y.toLocaleString()) });
-
-  makeChart('brandStackChart', { type:'bar',
-    data:{ labels:MONTHS, datasets: brandDatasets.map(d=>({...d, borderRadius:0})) },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>c.dataset.label+': $'+c.parsed.y.toLocaleString() }}},
-      scales:{
-        x:{ticks:{autoSkip:false},grid:{display:false},stacked:true},
-        y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:gridColor},stacked:true}
-      }} });
-
-  makeChart('structureChart', { type:'bar', data:{ labels:MONTHS, datasets:[
-    { label:'新客業績（估）', data:STATIC.newRev, backgroundColor:'#378ADD' },
-    { label:'舊客業績（估）', data:STATIC.oldRev, backgroundColor:'#B4B2A9' }
-  ]}, options:{ responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>c.dataset.label+': $'+c.parsed.y.toLocaleString() }}},
-    scales:{ x:{ticks:{autoSkip:false},grid:{display:false},stacked:true}, y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:gridColor},stacked:true} }} });
-
-  makeChart('newRatioChart', { type:'line', data:{ labels:MONTHS, datasets:[{
-    label:'新客佔比', data:STATIC.newRatio,
-    borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.08)',
-    pointBackgroundColor:'#378ADD', pointRadius:5, fill:true, tension:0.3
-  }]}, options:{ responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>'新客佔比：'+c.parsed.y+'%' }}},
-    scales:{ x:{ticks:{autoSkip:false},grid:{display:false}}, y:{min:0,max:100,ticks:{callback:v=>v+'%'},grid:{color:gridColor}} }} });
-
-  makeChart('cpaChart', { type:'bar', data:{ labels:MONTHS, datasets:[{
-    label:'CPA（元/人）', data:STATIC.cpa,
-    backgroundColor:['#1D9E75','#378ADD','#D85A30','#1D9E75'], borderRadius:3
-  }]}, options:{ responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>'CPA：$'+c.parsed.y+'/人' }}},
-    scales:{ x:{ticks:{autoSkip:false},grid:{display:false}}, y:{ticks:{callback:v=>'$'+v},grid:{color:gridColor}} }} });
-
-  makeChart('roasChart', { type:'line', data:{ labels:MONTHS, datasets:[{
-    label:'ROAS', data:STATIC.roas,
-    borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.08)',
-    pointBackgroundColor:'#1D9E75', pointRadius:5, fill:true, tension:0.3
-  }]}, options:{ responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c=>'ROAS：'+c.parsed.y+'x' }}},
-    scales:{ x:{ticks:{autoSkip:false},grid:{display:false}}, y:{ticks:{callback:v=>v+'x'},grid:{color:gridColor}} }} });
-
-  // 更新時間
+  // Update subtitle
   const now = new Date();
-  document.getElementById('lastUpdated').textContent =
-    `· 資料更新時間 ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('headerSub').textContent =
+    `大法商城 · 2026 年 ${M[0].replace('月','')}–${M[M.length-1]} · 更新於 ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 }
 
-// ── 載入資料（靜態版）──────────────────────────────
-function loadData() {
-  // 將 data 轉換為 render 需要的格式 [monthIdx][brandIdx]
-  const { brands, data } = BRAND_DATA;
-  // data 目前是 [monthIdx][brandIdx]，直接傳入
-  render({ brands, data });
+function cancelEdit(){
+  D = JSON.parse(JSON.stringify(editSnapshot));
+  exitEditMode();
+  render();
 }
 
-// ── Tab 切換 ──────────────────────────────────────
-function switchTab(btn, id) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+function exitEditMode(){
+  document.body.classList.remove('edit-mode');
+  document.getElementById('editBanner').style.display='none';
+  document.getElementById('btnEdit').style.display='inline-block';
+  document.getElementById('btnSave').style.display='none';
+  document.getElementById('btnCancel').style.display='none';
+}
+
+// ── Tab ──
+function switchTab(btn,id){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('visible'));
   btn.classList.add('active');
-  const sec = document.getElementById(id);
-  if (sec) sec.classList.add('visible');
+  const sec=document.getElementById(id);if(sec)sec.classList.add('visible');
 }
 
-// 啟動
-loadData();
+render();
 </script>
 </body>
 </html>
