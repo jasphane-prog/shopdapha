@@ -101,7 +101,8 @@
 
 <script>
 // ── 設定 ──────────────────────────────────────────
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzYNGKEghLnbGzoivou_ekU7PPBzGolKudbB6cExE_xJvD7dFRIOq9GtCrZoY-P6kLeLYEaMVVcPQH/pub?gid=2104604757&single=true&output=csv';
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzYNGKEghLnbGzoivou_ekU7PPBzGolKudbB6cExE_xJvD7dFRIOq9GtCrZoY-P6kLeLYEaMVVcPQH/pub?gid=2104604757&single=true&output=csv';
+  const CSV_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEET_CSV);
 
 // 靜態資料（總覽、結構、效率頁面用，來自原始記錄）
 const STATIC = {
