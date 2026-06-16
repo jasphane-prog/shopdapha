@@ -115,14 +115,14 @@ const BRAND_DATA = {
 
 // 靜態資料（總覽、結構、效率頁面用，來自原始記錄）
 const STATIC = {
-  adSpend:  [431, 12985, 14259, 3038],
-  members:  [41, 43, 16, 23],
+  adSpend:  [861, 19911, 21184, 6321],
+  members:  [20, 44, 16, 23],
   revenue:  [3642, 33618, 43072, 14081],
   newRev:   [3223, 18569, 28912, 12099],
   oldRev:   [419,  15049, 14160, 1982],
   newRatio: [89, 55, 67, 86],
-  cpa:      [11, 302, 891, 132],
-  roas:     [8.5, 2.6, 3.0, 4.6],
+  cpa:      [43, 453, 1324, 275],
+  roas:     [4.2, 1.7, 2.0, 2.2],
 };
 
 const MONTHS = ['2月','3月','4月','5月'];
@@ -302,10 +302,10 @@ function render({ brands, data }) {
         <table class="data-table">
           <thead><tr><th>月份</th><th>廣告花費</th><th>新會員數</th><th>CPA</th><th>總業績</th><th>ROAS</th><th>效率評估</th></tr></thead>
           <tbody>
-            <tr><td>2月</td><td>$431</td><td>41</td><td>$11</td><td>$3,642</td><td>8.5x</td><td>淡季參考</td></tr>
-            <tr><td>3月</td><td>$12,985</td><td>43</td><td>$302</td><td>$33,618</td><td>2.6x</td><td>規模最佳</td></tr>
-            <tr><td>4月</td><td>$14,259</td><td>16</td><td>$891</td><td>$43,072</td><td>3.0x</td><td>⚠ CPA 異常</td></tr>
-            <tr><td>5月</td><td>$3,038</td><td>23</td><td>$132</td><td>$14,081</td><td>4.6x</td><td>✓ 效率最佳</td></tr>
+            <tr><td>2月</td><td>$861</td><td>20</td><td>$43</td><td>$3,642</td><td>4.2x</td><td>淡季參考</td></tr>
+            <tr><td>3月</td><td>$19,911</td><td>44</td><td>$453</td><td>$33,618</td><td>1.7x</td><td>新客最多</td></tr>
+            <tr><td>4月</td><td>$21,184</td><td>16</td><td>$1,324</td><td>$43,072</td><td>2.0x</td><td>⚠ CPA 異常</td></tr>
+            <tr><td>5月</td><td>$6,321</td><td>23</td><td>$275</td><td>$14,081</td><td>2.2x</td><td>5/11 暫停</td></tr>
           </tbody>
         </table>
       </div>
@@ -315,11 +315,11 @@ function render({ brands, data }) {
   <!-- 分析建議 -->
   <section id="tab-suggest" class="section">
     <div class="insight-grid">
-      <div class="insight-card"><div class="badge badge-warn">⚠ 注意</div><div class="insight-title">4月 CPA 異常高（$891/人）</div><div class="insight-body">廣告花費 $14,259 但僅帶入 16 位新會員，是全期最差的獲客效率，為 5 月 CPA 的 6.7 倍。建議拉出 4 月廣告後台細看哪組素材或受眾拖累效率。</div></div>
-      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">5月廣告效率大幅改善（CPA $132）</div><div class="insight-body">預算縮減至 $3,038，新會員仍帶入 23 人，ROAS 回升至 4.6x，是 3–5 月中 ROAS 最佳的月份。5 月的投放邏輯值得保留作為後續參考基準。</div></div>
+      <div class="insight-card"><div class="badge badge-warn">⚠ 注意</div><div class="insight-title">4月 CPA 異常高（$891/人）</div><div class="insight-body">廣告花費 $21,184 但僅帶入 16 位新會員，CPA 高達 $1,324，是全期最差的獲客效率。建議拉出 4 月廣告後台細看哪組素材或受眾拖累效率。</div></div>
+      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">5月廣告效率大幅改善（CPA $132）</div><div class="insight-body">預算 $6,321，帶入 23 位新會員（CPA $275），5/11 後暫停投放。投放期間效率尚可，值得分析暫停前的素材設定作為參考基準。</div></div>
       <div class="insight-card"><div class="badge badge-info">ℹ 背景</div><div class="insight-title">2月幾乎無廣告投放（$431）</div><div class="insight-body">業績僅 $3,642，推測受農曆年假影響為消費淡季。此月 CPA 低（$11）僅因花費極少，不具參考性。可將 2 月預算提前挪至 3 月旺季。</div></div>
       <div class="insight-card"><div class="badge badge-warn">⚠ 注意</div><div class="insight-title">新客業績佔比持續偏高（55–89%）</div><div class="insight-body">各月新客業績貢獻均超過 55%，顯示品牌高度依賴新客。建議加強舊客回購機制，例如定期 LINE 推播、購買後回購提醒、會員獨家折扣。</div></div>
-      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">3月廣告業績連動明顯</div><div class="insight-body">3 月廣告花費 $12,985，帶動業績至 $33,618（ROAS 2.6x），新客 43 人為全期最高。整體業績規模是全期最佳，適合每年 Q1 末做大型投放。</div></div>
+      <div class="insight-card"><div class="badge badge-ok">✓ 亮點</div><div class="insight-title">3月廣告業績連動明顯</div><div class="insight-body">3 月廣告花費 $19,911，帶動業績至 $33,618，新客 44 人為全期最高。整體業績規模是全期最佳，適合每年 Q1 末做大型投放。</div></div>
       <div class="insight-card"><div class="badge badge-info">ℹ 品牌</div><div class="insight-title">${brands[topIdx]} 為最大業績來源</div><div class="insight-body">累計業績 ${fmt(brandTotals[topIdx])}，佔四個月總業績 ${pct(brandTotals[topIdx]/grandTotal*100)}，是各品牌中業績最高者。</div></div>
     </div>
     <p class="section-h">建議行動</p>
