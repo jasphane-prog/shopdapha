@@ -95,14 +95,23 @@
 
 <main id="mainContent">
   <div class="loading-bar">
-    <div class="spinner"></div><br>從 Google Sheet 載入最新資料中…
+    <div class="spinner"></div><br>載入資料中…
   </div>
 </main>
 
 <script>
-// ── 設定 ──────────────────────────────────────────
-const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSzYNGKEghLnbGzoivou_ekU7PPBzGolKudbB6cExE_xJvD7dFRIOq9GtCrZoY-P6kLeLYEaMVVcPQH/pub?gid=2104604757&single=true&output=csv';
-  const CSV_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEET_CSV);
+// ── 品牌業績資料（從 Google Sheet 更新於 2026/6/16）──────
+// 如需更新：直接修改下方數字，再 push 到 GitHub 即可
+const BRAND_DATA = {
+  brands: ['易利氣', '益生菌', 'SLIMWALK', '其他品項'],
+  // data[月份index][品牌index]，月份順序：2月、3月、4月、5月
+  data: [
+    [6309,  11957, 3539, 0  ],  // 2月
+    [7724,  16239, 9295, 360],  // 3月
+    [6937,  24273, 7331, 0  ],  // 4月
+    [3198,  8258,  1679, 0  ],  // 5月
+  ]
+};
 
 // 靜態資料（總覽、結構、效率頁面用，來自原始記錄）
 const STATIC = {
@@ -391,22 +400,12 @@ function render({ brands, data }) {
     `· 資料更新時間 ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 }
 
-// ── 載入資料 ──────────────────────────────────────
-async function loadData() {
-  try {
-    const res = await fetch(CSV_URL);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    const parsed = parseCSV(text);
-    render(parsed);
-  } catch (e) {
-    document.getElementById('mainContent').innerHTML =
-      `<div class="loading-bar" style="color:#A32D2D">
-        ⚠ 無法載入 Google Sheet 資料（${e.message}）<br>
-        <small style="margin-top:8px;display:block">請確認 Sheet 已設定為「公開發布」，或稍後再試。</small>
-        <button class="refresh-btn" style="margin-top:16px" onclick="loadData()">↻ 重試</button>
-      </div>`;
-  }
+// ── 載入資料（靜態版）──────────────────────────────
+function loadData() {
+  // 將 data 轉換為 render 需要的格式 [monthIdx][brandIdx]
+  const { brands, data } = BRAND_DATA;
+  // data 目前是 [monthIdx][brandIdx]，直接傳入
+  render({ brands, data });
 }
 
 // ── Tab 切換 ──────────────────────────────────────
