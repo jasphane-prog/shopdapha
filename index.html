@@ -96,7 +96,7 @@
       <div class="header-sub" id="headerSub">大法商城 · 2026 年 2–5 月</div>
     </div>
     <div class="header-actions">
-      <button class="btn" id="btnRefresh" onclick="loadFromSheet()">⟳ 重新整理</button>
+      <button class="btn" id="btnRefresh" onclick="loadAll()">⟳ 重新整理</button>
       <button class="btn btn-cancel" id="btnCancel" onclick="cancelEdit()">✕ 取消</button>
       <button class="btn btn-save"   id="btnSave"   onclick="saveEdit()">✓ 儲存更新</button>
       <button class="btn btn-edit"   id="btnEdit"   onclick="enterEdit()">✏️ 編輯資料</button>
@@ -108,6 +108,7 @@
   <div class="nav-inner">
     <button class="nav-btn active" onclick="switchTab(this,'tab-overview')">總覽</button>
     <button class="nav-btn" onclick="switchTab(this,'tab-brand')">品牌業績</button>
+    <button class="nav-btn" onclick="switchTab(this,'tab-trend')">品牌月趨勢</button>
     <button class="nav-btn" onclick="switchTab(this,'tab-structure')">業績結構</button>
     <button class="nav-btn" onclick="switchTab(this,'tab-efficiency')">投放效率</button>
     <button class="nav-btn" onclick="switchTab(this,'tab-suggest')">分析建議</button>
@@ -154,7 +155,6 @@ function toNum(v){
 
 async function loadFromSheet(){
   const sub = document.getElementById('headerSub');
-  const prevSub = sub.textContent;
   sub.textContent = '大法商城 · 讀取 Google Sheet 中…';
   try{
     const res = await fetch(CSV_URL, {cache:'no-store'});
@@ -189,10 +189,59 @@ async function loadFromSheet(){
     console.error('讀取 Google Sheet 失敗，改用內建預設資料：', err);
     sub.textContent = '大法商城 · ⚠ 無法讀取 Google Sheet，顯示內建預設資料（請確認共用權限或欄位格式）';
   }
+}
+
+// ══════════════════════════════════════════════
+// 「資料」分頁 — 品牌月趨勢（列＝品牌，欄＝月份）
+// ══════════════════════════════════════════════
+const SHEET_GID2 = '2104604757'; // 「資料」分頁
+const CSV_URL2 = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID2}`;
+
+// 備援資料（讀取失敗時顯示，取自目前分頁截圖）
+let D2 = {
+  months: ['1月','2月','3月','4月','5月','6月'],
+  brands: ['易利氣','益生菌','SLIMWALK','其他品項'],
+  data: [
+    [9319, 6309,  7724,  6937,  3198, 14747],
+    [9289, 11957, 16239, 24273, 8258, 21549],
+    [6027, 3539,  9295,  7331,  1679, 14784],
+    [630,  0,     360,   0,     0,    0    ],
+  ],
+};
+let trendStatus = 'fallback';
+
+async function loadBrandTrend(){
+  try{
+    const res = await fetch(CSV_URL2, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    const parsed = Papa.parse(text.trim(), {skipEmptyLines:true});
+    const rows = parsed.data;
+    if(!rows || rows.length < 2) throw new Error('「資料」分頁沒有資料列');
+
+    const header = rows[0];
+    const months = header.slice(1).map(h => String(h).trim()).filter(h => h !== '');
+    const dataRows = rows.slice(1).filter(r => r[0] && String(r[0]).trim() !== '');
+    if(dataRows.length === 0) throw new Error('「資料」分頁沒有資料列');
+
+    const brands = dataRows.map(r => String(r[0]).trim());
+    const data = dataRows.map(r => months.map((_,mi) => toNum(r[1+mi])));
+
+    D2 = {months, brands, data};
+    trendStatus = 'ok';
+  }catch(err){
+    console.error('讀取「資料」分頁失敗，改用內建備援：', err);
+    trendStatus = 'error';
+  }
+}
+
+async function loadAll(){
+  await Promise.allSettled([loadFromSheet(), loadBrandTrend()]);
   render();
 }
 
 const COLORS = ['#378ADD','#1D9E75','#D85A30','#B4B2A9'];
+const TCOLORS = ['#378ADD','#1D9E75','#D85A30','#B4B2A9','#8E5FD8','#DDA511'];
 const GC = 'rgba(136,135,128,0.15)';
 let charts = {};
 let editSnapshot = null;
@@ -227,11 +276,20 @@ function derived(){
   return {totalAd,totalMem,totalRev,avgCpa,monthTotals,brandTotals,grandTotal,topBrand,cpa,roas,newRatio};
 }
 
+function derivedTrend(){
+  const months = D2.months;
+  const brandTotals = D2.data.map(row => sum(row));
+  const monthTotals = months.map((_,mi) => sum(D2.data.map(row => row[mi] || 0)));
+  const grandTotal = sum(brandTotals);
+  return {months, brandTotals, monthTotals, grandTotal};
+}
+
 // ══════════════════════════════════════════════
 // RENDER
 // ══════════════════════════════════════════════
 function render(){
   const x = derived();
+  const t = derivedTrend();
   const M = D.months;
 
   document.getElementById('mainContent').innerHTML = `
@@ -314,7 +372,36 @@ function render(){
     </div>
   </section>
 
-  <!-- 業績結構 -->
+  <!-- 品牌月趨勢（資料分頁） -->
+  <section id="tab-trend" class="section">
+    ${trendStatus==='error' ? `<div class="chart-card" style="border-color:var(--edit-border);background:var(--edit-bg);color:var(--warning);font-size:12px;">⚠ 無法讀取「資料」分頁，目前顯示內建備援資料，請確認該分頁的共用權限與欄位格式。</div>` : ''}
+    <div class="kpi-grid">
+      ${t.brandTotals.map((v,bi)=>`<div class="kpi-card"><div class="kpi-label">${D2.brands[bi]} 累計（${t.months[0]}–${t.months[t.months.length-1]}）</div><div class="kpi-value">${fmt(v)}</div><div class="kpi-sub">佔比 ${pct(v/t.grandTotal*100)}</div></div>`).join('')}
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">各品牌月度業績趨勢</div>
+      <div class="chart-card-sub">${t.months[0]}–${t.months[t.months.length-1]}（元）</div>
+      <div class="legend">${D2.brands.map((b,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${TCOLORS[i%TCOLORS.length]}"></span>${b}</span>`).join('')}</div>
+      <div class="chart-wrap" style="height:300px"><canvas id="trendLineChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">各品牌各月業績對比</div>
+      <div class="chart-card-sub">分組長條圖（元）</div>
+      <div class="legend">${D2.brands.map((b,i)=>`<span class="legend-item"><span class="legend-dot" style="background:${TCOLORS[i%TCOLORS.length]}"></span>${b}</span>`).join('')}</div>
+      <div class="chart-wrap" style="height:300px"><canvas id="trendBarChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">品牌月業績明細</div>
+      <div class="chart-card-sub">（元）</div>
+      <div class="data-table-wrap"><table class="data-table">
+        <thead><tr><th>品牌</th>${t.months.map(m=>`<th>${m}</th>`).join('')}<th>累計</th><th>佔比</th></tr></thead>
+        <tbody>
+          ${D2.brands.map((b,bi)=>`<tr><td>${b}</td>${t.months.map((_,mi)=>`<td>${fmt(D2.data[bi][mi])}</td>`).join('')}<td>${fmt(t.brandTotals[bi])}</td><td>${pct(t.brandTotals[bi]/t.grandTotal*100)}</td></tr>`).join('')}
+          <tr class="total-row"><td>月份小計</td>${t.monthTotals.map(v=>`<td>${fmt(v)}</td>`).join('')}<td>${fmt(t.grandTotal)}</td><td>100%</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
   <section id="tab-structure" class="section">
     <!-- 編輯面板：結構 -->
     <div class="edit-panel">
@@ -443,6 +530,23 @@ function render(){
     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'ROAS：'+c.parsed.y+'x'}}},
     scales:{x:{ticks:{autoSkip:false},grid:{display:false}},y:{ticks:{callback:v=>v+'x'},grid:{color:GC}}}}});
 
+  // 品牌月趨勢（資料分頁）
+  const trendLineSets = D2.brands.map((b,bi)=>({
+    label:b,data:t.months.map((_,mi)=>D2.data[bi][mi]),
+    borderColor:TCOLORS[bi%TCOLORS.length],backgroundColor:TCOLORS[bi%TCOLORS.length],
+    pointRadius:4,fill:false,tension:0.25
+  }));
+  mkChart('trendLineChart',{type:'line',data:{labels:t.months,datasets:trendLineSets},options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': $'+c.parsed.y.toLocaleString()}}},
+    scales:{x:{ticks:{autoSkip:false},grid:{display:false}},y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{color:GC}}}}});
+
+  const trendBarSets = D2.brands.map((b,bi)=>({
+    label:b,data:t.months.map((_,mi)=>D2.data[bi][mi]),
+    backgroundColor:TCOLORS[bi%TCOLORS.length],borderRadius:3
+  }));
+  mkChart('trendBarChart',{type:'bar',data:{labels:t.months,datasets:trendBarSets},options:barBase(c=>c.dataset.label+': $'+c.parsed.y.toLocaleString())});
+
   // re-apply edit mode UI if needed
   if(document.body.classList.contains('edit-mode')) applyEditUI();
 }
@@ -520,7 +624,7 @@ function switchTab(btn,id){
   const sec=document.getElementById(id);if(sec)sec.classList.add('visible');
 }
 
-loadFromSheet();
+loadAll();
 </script>
 </body>
 </html>
