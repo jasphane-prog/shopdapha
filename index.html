@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>月度投放績效分析 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root {
     --bg:#f7f6f2;--surface:#fff;--border:#e8e6df;
@@ -95,6 +96,7 @@
       <div class="header-sub" id="headerSub">大法商城 · 2026 年 2–5 月</div>
     </div>
     <div class="header-actions">
+      <button class="btn" id="btnRefresh" onclick="loadFromSheet()">⟳ 重新整理</button>
       <button class="btn btn-cancel" id="btnCancel" onclick="cancelEdit()">✕ 取消</button>
       <button class="btn btn-save"   id="btnSave"   onclick="saveEdit()">✓ 儲存更新</button>
       <button class="btn btn-edit"   id="btnEdit"   onclick="enterEdit()">✏️ 編輯資料</button>
@@ -116,7 +118,7 @@
 
 <script>
 // ══════════════════════════════════════════════
-// 資料（更新時間：2026/6/16）
+// 資料 — 預設值（Google Sheet 讀取失敗時的備援資料，更新時間：2026/6/16）
 // ══════════════════════════════════════════════
 let D = {
   months: ['2月','3月','4月','5月'],
@@ -134,6 +136,61 @@ let D = {
     [3198,  8258,  1679, 0  ],
   ],
 };
+
+// ══════════════════════════════════════════════
+// Google Sheet 連動
+// ══════════════════════════════════════════════
+// 試算表要有這些欄位（第一列為標題列），品牌欄可自行增減：
+// 月份 | 廣告花費 | 新會員數 | 總業績 | 新客業績 | 舊客業績 | <品牌1> | <品牌2> | ...
+const SHEET_ID  = '1ndARBo2FvMV095V9nF__aGTYYGBHIfNVc_Prb5mWvW4';
+const SHEET_GID = '0'; // 對應網址列 gid=0 那個分頁，換分頁要改這裡
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
+
+function toNum(v){
+  if(v===undefined || v===null) return 0;
+  const n = parseFloat(String(v).replace(/[$,\s]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+async function loadFromSheet(){
+  const sub = document.getElementById('headerSub');
+  const prevSub = sub.textContent;
+  sub.textContent = '大法商城 · 讀取 Google Sheet 中…';
+  try{
+    const res = await fetch(CSV_URL, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    const parsed = Papa.parse(text.trim(), {skipEmptyLines:true});
+    const rows = parsed.data;
+    if(!rows || rows.length < 2) throw new Error('試算表沒有資料列');
+
+    const header = rows[0];
+    const dataRows = rows.slice(1).filter(r => r[0] && String(r[0]).trim() !== '');
+    if(dataRows.length === 0) throw new Error('試算表沒有資料列');
+
+    const brandNames = header.slice(6).map(h => String(h).trim()).filter(h => h !== '');
+
+    const months=[], adSpend=[], members=[], revenue=[], newRev=[], oldRev=[], brandData=[];
+    dataRows.forEach(r=>{
+      months.push(String(r[0]).trim());
+      adSpend.push(toNum(r[1]));
+      members.push(toNum(r[2]));
+      revenue.push(toNum(r[3]));
+      newRev.push(toNum(r[4]));
+      oldRev.push(toNum(r[5]));
+      brandData.push(brandNames.map((_,bi) => toNum(r[6+bi])));
+    });
+
+    D = {months, adSpend, members, revenue, newRev, oldRev, brands:brandNames, brandData};
+
+    const now = new Date();
+    sub.textContent = `大法商城 · 資料來源：Google Sheet · 讀取於 ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  }catch(err){
+    console.error('讀取 Google Sheet 失敗，改用內建預設資料：', err);
+    sub.textContent = '大法商城 · ⚠ 無法讀取 Google Sheet，顯示內建預設資料（請確認共用權限或欄位格式）';
+  }
+  render();
+}
 
 const COLORS = ['#378ADD','#1D9E75','#D85A30','#B4B2A9'];
 const GC = 'rgba(136,135,128,0.15)';
@@ -438,7 +495,7 @@ function saveEdit(){
   // Update subtitle
   const now = new Date();
   document.getElementById('headerSub').textContent =
-    `大法商城 · 2026 年 ${M[0].replace('月','')}–${M[M.length-1]} · 更新於 ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    `大法商城 · 手動覆蓋（未寫回 Google Sheet）· 更新於 ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}｜按「重新整理」可還原成 Sheet 資料`;
 }
 
 function cancelEdit(){
@@ -463,7 +520,7 @@ function switchTab(btn,id){
   const sec=document.getElementById(id);if(sec)sec.classList.add('visible');
 }
 
-render();
+loadFromSheet();
 </script>
 </body>
 </html>
