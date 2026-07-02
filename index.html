@@ -247,6 +247,11 @@ function syncBrandDataToMain(){
     const idx = D2.months.findIndex(dm => monthNum(dm) === n);
     return D2.brands.map((_,bi) => idx >= 0 ? (D2.data[bi][idx] || 0) : 0);
   });
+  // 總業績改用各品牌堆疊加總，找不到對應月份的品牌資料時才退回主表 F 欄的數字
+  D.revenue = D.brandData.map((row, mi) => {
+    const stackSum = sum(row);
+    return stackSum > 0 ? stackSum : D.revenue[mi];
+  });
 }
 
 async function loadAll(){
