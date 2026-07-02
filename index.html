@@ -122,19 +122,20 @@
 // 資料 — 預設值（Google Sheet 讀取失敗時的備援資料，更新時間：2026/6/16）
 // ══════════════════════════════════════════════
 let D = {
-  months: ['2月','3月','4月','5月'],
-  adSpend:  [861,   19911, 21184, 6321],
-  members:  [20,    44,    16,    23],
-  revenue:  [3642,  33618, 43072, 14081],
-  newRev:   [3223,  18569, 28912, 12099],
-  oldRev:   [419,   15049, 14160, 1982],
+  months: ['2月','3月','4月','5月','6月'],
+  adSpend:  [861,   19911, 21184, 6321,  0    ],
+  members:  [20,    44,    16,    23,    28   ],
+  revenue:  [3642,  33618, 43072, 14081, 47612],
+  newRev:   [3223,  18569, 28912, 12099, 38642],
+  oldRev:   [419,   15049, 14160, 1982,  8970 ],
   brands:   ['易利氣','益生菌','SLIMWALK','其他品項'],
-  // brandData[monthIdx][brandIdx]
+  // brandData[monthIdx][brandIdx] — 對應「資料」分頁 2~6月
   brandData:[
     [6309,  11957, 3539, 0  ],
     [7724,  16239, 9295, 360],
     [6937,  24273, 7331, 0  ],
     [3198,  8258,  1679, 0  ],
+    [14747, 21549, 14784, 0 ],
   ],
 };
 
@@ -164,24 +165,23 @@ async function loadFromSheet(){
     const rows = parsed.data;
     if(!rows || rows.length < 2) throw new Error('試算表沒有資料列');
 
-    const header = rows[0];
     const dataRows = rows.slice(1).filter(r => r[0] && String(r[0]).trim() !== '');
     if(dataRows.length === 0) throw new Error('試算表沒有資料列');
 
-    const brandNames = header.slice(6).map(h => String(h).trim()).filter(h => h !== '');
-
-    const months=[], adSpend=[], members=[], revenue=[], newRev=[], oldRev=[], brandData=[];
+    // 欄位：A 月份 | B 廣告花費 | C 新會員數 | D 新客業績 | E 舊客業績 | F 總業績 | G 備註(不使用)
+    const months=[], adSpend=[], members=[], newRev=[], oldRev=[], revenue=[];
     dataRows.forEach(r=>{
-      months.push(String(r[0]).trim());
+      let m = String(r[0]).trim();
+      if(/^\d+$/.test(m)) m = m + '月'; // 純數字補上「月」
+      months.push(m);
       adSpend.push(toNum(r[1]));
       members.push(toNum(r[2]));
-      revenue.push(toNum(r[3]));
-      newRev.push(toNum(r[5]));
+      newRev.push(toNum(r[3]));
       oldRev.push(toNum(r[4]));
-      brandData.push(brandNames.map((_,bi) => toNum(r[6+bi])));
+      revenue.push(toNum(r[5]));
     });
 
-    D = {months, adSpend, members, revenue, newRev, oldRev, brands:brandNames, brandData};
+    D = {months, adSpend, members, revenue, newRev, oldRev, brands:D.brands, brandData:D.brandData};
 
     const now = new Date();
     sub.textContent = `大法商城 · 資料來源：Google Sheet · 讀取於 ${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -235,8 +235,23 @@ async function loadBrandTrend(){
   }
 }
 
+function monthNum(s){
+  const m = String(s).match(/\d+/);
+  return m ? m[0] : null;
+}
+
+function syncBrandDataToMain(){
+  D.brands = D2.brands;
+  D.brandData = D.months.map(m=>{
+    const n = monthNum(m);
+    const idx = D2.months.findIndex(dm => monthNum(dm) === n);
+    return D2.brands.map((_,bi) => idx >= 0 ? (D2.data[bi][idx] || 0) : 0);
+  });
+}
+
 async function loadAll(){
   await Promise.allSettled([loadFromSheet(), loadBrandTrend()]);
+  syncBrandDataToMain();
   render();
 }
 
