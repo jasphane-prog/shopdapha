@@ -176,8 +176,8 @@ async function loadFromSheet(){
       adSpend.push(toNum(r[1]));
       members.push(toNum(r[2]));
       revenue.push(toNum(r[3]));
-      newRev.push(toNum(r[4]));
-      oldRev.push(toNum(r[5]));
+      newRev.push(toNum(r[5]));
+      oldRev.push(toNum(r[4]));
       brandData.push(brandNames.map((_,bi) => toNum(r[6+bi])));
     });
 
